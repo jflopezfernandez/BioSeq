@@ -17,19 +17,27 @@ void StringCopyReverse(char* s1, const char* s2) {
 }
 
 int FileExists(const char* Filename) {
+    // TODO: Implement _WIN32 handler
+
     #if defined (__unix__)
     if (access(Filename, F_OK) != -1) {
         return TRUE;
     } else {
         return FALSE;
     }
-    #endif //
+    #endif // unix
 }
 
-FILE* OpenFile(const char* Filename) {
-    //
+FILE* OpenFile(const char* Filename, const char* Mode) {
+    FILE* fileHandle = fopen(Filename, Mode);
 
-    return NULL;
+    if (!fileHandle) {
+        // TODO: Handle error.
+
+        exit(EXIT_FAILURE);
+    }
+
+    return fileHandle;
 }
 
 #define ADENINE  'A'
@@ -46,8 +54,11 @@ typedef enum monomers_t {
     Uracyl
 } Monomers;
 
-inline char Complement(char Monomer) {
-    switch (Monomer) {
+typedef char  Monomer;
+typedef char* Sequence;
+
+inline char Complement(Monomer base) {
+    switch (base) {
         case ADENINE: {
             return THYMINE;
         }
@@ -71,10 +82,24 @@ inline char Complement(char Monomer) {
     }
 }
 
-char* GetRNATranscription(const char* DNASequence) {
+Sequence AllocateSequence(size_t length) {
+    Sequence newSequence = malloc(sizeof(char) * length);
+
+    if (!newSequence) {
+        // TODO: Handle error
+
+        exit(EXIT_FAILURE);
+    }
+
+    memset(newSequence, 0, length);
+
+    return newSequence;
+}
+
+Sequence GetRNATranscription(Sequence DNASequence) {
     const size_t Length = strlen(DNASequence);
 
-    char* RNASequence = malloc(sizeof(char) * Length);
+    Sequence RNASequence = AllocateSequence(Length);
     strcpy(RNASequence, DNASequence);
 
     for (size_t i = 0; i < Length; ++i) {
@@ -86,28 +111,62 @@ char* GetRNATranscription(const char* DNASequence) {
     return RNASequence;
 }
 
-char* GetReverseComplement(const char* DNASequence) {
+Sequence GetReverseComplement(Sequence DNASequence) {
     const size_t Length = strlen(DNASequence);
 
-    char* NewSequence = malloc(sizeof(char) * Length);
-    memset(NewSequence, 0, Length);
+    Sequence NewSequence = AllocateSequence(Length);
 
     for (size_t i = 0; i < Length; ++i) {
         NewSequence[i] = Complement(DNASequence[i]);
     }
 
-    char* ReverseSequence = malloc(sizeof(char) * Length);
+    Sequence ReverseSequence = AllocateSequence(Length);
     StringCopyReverse(ReverseSequence, NewSequence);
 
     return ReverseSequence;
 }
 
+Sequence CopyStringAtIndex(Sequence dest, Sequence source, size_t index) {
+    Sequence handle = &dest[index];
 
-int main(int argc, char *argv[])
+    strcpy(handle, source);
+
+    return handle;
+}
+
+Sequence AppendToSequence(Sequence Sequence, Sequence Addition) {
+    const size_t L1 = strlen(Sequence);
+    const size_t L2 = strlen(Addition);
+    const size_t ln = L1 + L2;
+
+    Sequence newSequence = AllocateSequence(ln);
+
+    strcpy(newSequence, Sequence);
+    CopyStringAtIndex(newSequence, Addition, L1);
+
+    return newSequence;
+}
+
+Sequence PrependToSequence(Sequence Sequence, Sequence Addition) {
+    const size_t L1 = strlen(Sequence);
+    const size_t L2 = strlen(Addition);
+    const size_t ln = L1 + L2;
+
+    Sequence newSequence = AllocateSequence(ln);
+
+    strcpy(newSequence, Addition);
+    CopyStringAtIndex(newSequence, Sequence, L2);
+
+    return newSequence;
+}
+
+
+//int main(int argc, char *argv[])
+int main()
 {
-    if (argc == 1) { return EXIT_SUCCESS; }
+    //if (argc == 1) { return EXIT_SUCCESS; }
 
-    FILE* inputFile = OpenFile(argv[1]);
+    //FILE* inputFile = OpenFile(argv[1]);
 
     // Part 1
     // char* DNA = "ACGGGAGGACGGGAAAATTACTACGGCATTAGC";
@@ -168,6 +227,16 @@ int main(int argc, char *argv[])
     // printf("Cytosine: %d\n", Cytosine);
     // printf("Guanine:  %d\n", Guanine);
     // printf("Thymine:  %d\n", Thymine);
+
+    Sequence s1 = "ACGT";
+    Sequence s2 = "CC";
+    Sequence s3 = AppendToSequence(s1, s2);
+    Sequence s4 = PrependToSequence(s3, s2);
+
+    printf("s1: %s\n", s1);
+    printf("s2: %s\n", s2);
+    printf("s3: %s\n", s3);
+    printf("s4: %s\n", s4);
 
     return EXIT_SUCCESS;
 }
